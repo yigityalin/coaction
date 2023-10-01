@@ -10,6 +10,7 @@ from coaction.agents.fictitious_play.model_free_fp import ModelFreeFictitiousPla
 from coaction.agents.fictitious_play.model_free_sfp import (
     ModelFreeSmoothedFictitiousPlay,
 )
+from coaction.agents.ind_q.ind_q import IndividualQLearning
 
 
 __all__ = [
@@ -21,4 +22,5 @@ __all__ = [
     "SynchronousSmoothedFictitiousPlay",
     "ModelFreeFictitiousPlay",
     "ModelFreeSmoothedFictitiousPlay",
+    "IndividualQLearning",
 ]
