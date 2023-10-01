@@ -1,9 +1,14 @@
 """Utility functions for independent Q-learning agents."""
 
+from typing import Final
+
 import numpy as np
 import numpy.typing as npt
 
 from coaction.games.game import RewardType
+
+
+LOGGABLE_PARAMS: Final[set] = {"q", "v", "counts"}
 
 
 def get_initial_q(

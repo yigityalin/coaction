@@ -78,6 +78,10 @@ class IndividualQLearning(TwoPlayerAgent):
 
         self._mu = None
 
+    @property
+    def loggable_params(self) -> set[str]:
+        return ind_q_utils.LOGGABLE_PARAMS
+
     def reset(self):
         super().reset()
         self._counts = np.zeros_like(self._counts)

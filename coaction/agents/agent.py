@@ -1,7 +1,7 @@
 """Implements the base class for agents."""
 
 from abc import ABC, abstractmethod
-from collections.abc import Sequence
+from collections.abc import Collection, Sequence
 from copy import deepcopy
 from typing import Any
 import pickle
@@ -17,13 +17,37 @@ ParameterType = Any
 class Agent(ABC):
     """Base class for all agents."""
 
-    def __init__(self, name: str, seed: int, **kwargs):
+    def __init__(
+        self, name: str, seed: int, logged_params: Collection[str] = None, **kwargs
+    ):
+        """Initialize the agent.
+
+        Args:
+            name (str): The name of the agent.
+            seed (int): The seed for the random number generator.
+            logged_params (dict[str, Any]): The parameters to log. If None, default agent
+                configuration is used. If the agent does not override `loggable_params`,
+                this parameter is ignored and the default agent configuration is used.
+                This is useful for agents that are implemented in coaction. For custom
+                agents, it is suggested to implement the agent according to the
+                __setattr__ method, i.e., all the params except the logged ones should
+                be registered as buffers via 'register_buffer' or via adding '_' before
+                the variable name.
+            **kwargs: Keyword arguments.
+        """
         _ = kwargs  # ignore unused kwargs
         self._name: str = name
         self._seed: int = seed
         self._rng = None
         self._buffer = {}
         self._logged_params = {}
+
+        if self.loggable_params is NotImplemented:
+            logged_params = None
+        if logged_params:
+            self._logged_params_names = set(logged_params) & self.loggable_params
+        else:
+            self._logged_params_names = None
 
     def __repr__(self):
         return f"{self.__class__.__name__}(name={self.name})"
@@ -36,7 +60,12 @@ class Agent(ABC):
 
         In order to register a parameter invisible to loggers, use `register_buffer` instead.
         """
-        if key.startswith("_"):
+        logged_params = (
+            self._logged_params_names if hasattr(self, "_logged_params_names") else None
+        )
+        if (logged_params is None and key.startswith("_")) or (
+            logged_params is not None and key.lstrip("_") not in logged_params
+        ):
             super().__setattr__(key, value)
         else:
             self.register_parameter(key, value)
@@ -57,6 +86,11 @@ class Agent(ABC):
         if self._rng is None:
             self._rng = np.random.default_rng(self.seed)
         return self._rng
+
+    @property
+    def loggable_params(self) -> set[str]:
+        """Return the agent parameters that can be logged."""
+        return NotImplemented
 
     @property
     def params(self) -> dict[str, Any]:

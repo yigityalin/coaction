@@ -1,6 +1,6 @@
 """Implementation of the Fictitious Play algorithm."""
 
-from collections.abc import Callable
+from collections.abc import Callable, Collection
 from typing import Final, Sequence
 
 import numpy as np
@@ -43,6 +43,7 @@ class AsynchronousFictitiousPlay(TwoPlayerAgent):
         gamma: float,
         initial_Q: None | int | float | np.ndarray = None,
         initial_pi: None | int | float | np.ndarray = None,
+        logged_params: Collection[str] = None,
         **kwargs,
     ):
         """Initialize the agent.
@@ -57,8 +58,9 @@ class AsynchronousFictitiousPlay(TwoPlayerAgent):
             gamma (float): Discount factor
             initial_Q (None | int | float | np.ndarray): The initial Q matrix.
             initial_pi (None | int | float | np.ndarray): The initial pi matrix.
+            logged_params (Collection[str]): The parameters to log.
         """
-        super().__init__(name, seed, **kwargs)
+        super().__init__(name, seed, logged_params, **kwargs)
         self._R = reward_matrix  # pylint: disable=invalid-name
         self._T = transition_matrix  # pylint: disable=invalid-name
 
@@ -88,6 +90,10 @@ class AsynchronousFictitiousPlay(TwoPlayerAgent):
         self._utils = fp_utils.FictitiousPlayUtils(self._Q, self._pi, self.rng)
 
         self._eye: Final = np.eye(reward_matrix.shape[-1])
+
+    @property
+    def loggable_params(self) -> set[str]:
+        return fp_utils.LOGGABLE_PARAMS
 
     def reset(self):
         super().reset()

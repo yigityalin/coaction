@@ -1,10 +1,15 @@
 """Utilities for fictitious play agents."""
 
+from typing import Final
+
 import numpy as np
 import numpy.typing as npt
 
 from coaction.games.game import ActionType, RewardType, StateType
 from coaction.utils.math import softmax
+
+
+LOGGABLE_PARAMS: Final[set] = {"Q", "pi", "counts", "v"}
 
 
 def get_initial_Q(  # pylint: disable=invalid-name
