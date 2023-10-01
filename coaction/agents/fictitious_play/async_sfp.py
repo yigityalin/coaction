@@ -44,6 +44,8 @@ class AsynchronousSmoothedFictitiousPlay(TwoPlayerAgent):
         beta: Callable[[int], float],
         gamma: float,
         tau: float,
+        initial_Q: None | int | float | np.ndarray = None,
+        initial_pi: None | int | float | np.ndarray = None,
         **kwargs,
     ):
         """Initialize the agent.
@@ -57,6 +59,8 @@ class AsynchronousSmoothedFictitiousPlay(TwoPlayerAgent):
             beta (Callable[[int], float]): Step size for Q function.
             gamma (float): Discount factor
             tau (float): Temperature parameter
+            initial_Q (None | int | float | np.ndarray): The initial Q matrix.
+            initial_pi (None | int | float | np.ndarray): The initial pi matrix.
         """
         super().__init__(name, seed, **kwargs)
         self._R = reward_matrix  # pylint: disable=invalid-name
@@ -66,15 +70,21 @@ class AsynchronousSmoothedFictitiousPlay(TwoPlayerAgent):
         self._beta = beta
         self._gamma = gamma
         self._tau = tau
+        self._initial_Q = (  # pylint: disable=invalid-name
+            reward_matrix if initial_Q is None else initial_Q
+        )
+        self._initial_pi = initial_pi
 
         self._n_states = reward_matrix.shape[0]
         self._n_actions = reward_matrix.shape[1]
         self._n_opponent_actions = reward_matrix.shape[2]
 
         self.counts = np.zeros(self._n_states, dtype=np.int_)
-        self.Q = reward_matrix.copy()  # pylint: disable=invalid-name
-        self.pi = self.rng.dirichlet(  # pylint: disable=invalid-name
-            np.ones(self._n_opponent_actions), size=self._n_states
+        self.Q = fp_utils.get_initial_Q(  # pylint: disable=invalid-name
+            self._initial_Q, self._n_states, self._n_actions, self._n_opponent_actions
+        )
+        self.pi = fp_utils.get_initial_pi(  # pylint: disable=invalid-name
+            self._initial_pi, self._n_states, self._n_opponent_actions, self.rng
         )
         self.v = np.zeros(  # pylint: disable=invalid-name
             self._n_states, dtype=np.float_
@@ -88,9 +98,11 @@ class AsynchronousSmoothedFictitiousPlay(TwoPlayerAgent):
     def reset(self):
         super().reset()
         self.counts = np.zeros(self._n_states, dtype=np.int_)
-        self.Q = self._R.copy()  # pylint: disable=invalid-name
-        self.pi = self.rng.dirichlet(  # pylint: disable=invalid-name
-            np.ones(self._n_opponent_actions), size=self._n_states
+        self.Q = fp_utils.get_initial_Q(
+            self._initial_Q, self._n_states, self._n_actions, self._n_opponent_actions
+        )
+        self.pi = fp_utils.get_initial_pi(
+            self._initial_pi, self._n_states, self._n_opponent_actions, self.rng
         )
         self.v = np.zeros(  # pylint: disable=invalid-name
             self._n_states, dtype=np.float_

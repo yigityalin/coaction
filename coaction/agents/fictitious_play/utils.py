@@ -7,6 +7,77 @@ from coaction.games.game import ActionType, RewardType, StateType
 from coaction.utils.math import softmax
 
 
+def get_initial_Q(  # pylint: disable=invalid-name
+    _initial_Q: None | int | float | np.ndarray,  # pylint: disable=invalid-name
+    _n_states: int,
+    _n_actions: int,
+    _n_opponent_actions: int,
+) -> npt.NDArray[RewardType]:
+    """Return the initial Q matrix.
+
+    Args:
+        _initial_q (None | int | float | np.ndarray): The initial Q matrix.
+        _n_states (int): The number of states.
+        _n_actions (int): The number of actions.
+        _n_opponent_actions (int): The number of opponent actions.
+    """
+    if _initial_Q is None:
+        initial_Q = np.zeros(  # pylint: disable=invalid-name
+            (_n_states, _n_actions, _n_opponent_actions)
+        )
+    elif isinstance(_initial_Q, (int, float)):
+        initial_Q = (  # pylint: disable=invalid-name
+            np.ones((_n_states, _n_actions, _n_opponent_actions)) * _initial_Q
+        )
+    elif isinstance(_initial_Q, np.ndarray):
+        if _initial_Q.shape != (
+            _n_states,
+            _n_actions,
+            _n_opponent_actions,
+        ):
+            raise ValueError(
+                f"initial_q must have shape {(_n_states, _n_actions, _n_opponent_actions)}, "
+                f"but has shape {_initial_Q.shape}."
+            )
+        initial_Q = _initial_Q.copy()  # pylint: disable=invalid-name
+    else:
+        raise TypeError(
+            f"initial_q must be None, int, float, or np.ndarray, "
+            f"but is {type(_initial_Q)}."
+        )
+    return initial_Q
+
+
+def get_initial_pi(
+    _initial_pi: None | np.ndarray,
+    _n_states: int,
+    _n_opponent_actions: int,
+    rng: np.random.Generator,
+) -> npt.NDArray[np.float_]:
+    """Return the initial belief matrix.
+
+    Args:
+        _initial_pi (None | np.ndarray): The initial belief matrix.
+        _n_states (int): The number of states.
+        _n_opponent_actions (int): The number of opponent actions.
+        rng (np.random.Generator): The random number generator.
+    """
+    if _initial_pi is None:
+        initial_pi = rng.dirichlet(np.ones(_n_opponent_actions), size=_n_states)
+    elif isinstance(_initial_pi, np.ndarray):
+        if _initial_pi.shape != (_n_states, _n_opponent_actions):
+            raise ValueError(
+                f"initial_pi must have shape {(_n_states, _n_opponent_actions)}, "
+                f"but has shape {_initial_pi.shape}."
+            )
+        initial_pi = _initial_pi.copy()
+    else:
+        raise TypeError(
+            f"initial_pi must be None or np.ndarray, but is {type(_initial_pi)}."
+        )
+    return initial_pi
+
+
 def q_function(
     Q: npt.NDArray[RewardType], pi: npt.NDArray[np.float_]
 ):  # pylint: disable=invalid-name

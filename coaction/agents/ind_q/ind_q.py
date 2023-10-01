@@ -7,6 +7,7 @@ import numpy as np
 import numpy.typing as npt
 
 from coaction.agents.agent import TwoPlayerAgent
+from coaction.agents.ind_q import utils as ind_q_utils
 from coaction.games.game import ActionType, RewardType, StateType
 from coaction.utils.math import softmax
 
@@ -42,6 +43,7 @@ class IndividualQLearning(TwoPlayerAgent):
         gamma: float,
         tau: float,
         max_step_size: float,
+        initial_q: None | int | float | np.ndarray = None,
         **kwargs,
     ):
         """Initialize the agent.
@@ -55,6 +57,7 @@ class IndividualQLearning(TwoPlayerAgent):
             gamma (float): Discount factor
             tau (float): Temperature parameter
             max_step_size (float): Maximum step size for q update
+            initial_q (None | int | float | np.ndarray): The initial Q matrix.
         """
         super().__init__(name, seed, **kwargs)
         self._alpha = alpha
@@ -62,12 +65,15 @@ class IndividualQLearning(TwoPlayerAgent):
         self._gamma = gamma
         self._tau = tau
         self._max_step_size = max_step_size
+        self._initial_q = initial_q
 
         self._n_states = reward_matrix.shape[0]
         self._n_actions = reward_matrix.shape[1]
 
         self._counts = np.zeros(self._n_states)
-        self._q = np.zeros((self._n_states, self._n_actions))
+        self._q = ind_q_utils.get_initial_q(
+            self._initial_q, self._n_states, self._n_actions
+        )
         self.v = np.zeros(self._n_states)  # pylint: disable=invalid-name
 
         self._mu = None
@@ -75,7 +81,9 @@ class IndividualQLearning(TwoPlayerAgent):
     def reset(self):
         super().reset()
         self._counts = np.zeros_like(self._counts)
-        self._q = np.zeros_like(self._q)
+        self._q = ind_q_utils.get_initial_q(
+            self._initial_q, self._n_states, self._n_actions
+        )
         self.v = np.zeros_like(self.v)
 
     def act(self, state: StateType) -> ActionType:
