@@ -116,6 +116,7 @@ class ProjectConfig:
         paths = ProjectPaths(path, increment_run=True)
         project_dir = paths.get_project_dir()
         if not project_dir.is_dir() or not paths.get_project_config_dir().is_dir():
+            paths.cleanup()
             raise ValueError(f"Path {path} is not a directory.")
         global_config = GlobalConfig.from_py_file(paths.get_project_config_path())
         experiments = sorted(

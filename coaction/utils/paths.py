@@ -56,6 +56,16 @@ class ProjectPaths:
         """
         return self.get_project_logs_dir() / f"run_{run}"
 
+    def cleanup(self) -> None:
+        """Remove the project run log directory."""
+        self.get_project_run_log_dir().rmdir()
+        project_logs_dir = self.get_project_logs_dir()
+        if project_logs_dir.exists() and not list(project_logs_dir.iterdir()):
+            project_logs_dir.rmdir()
+        project_dir = self.get_project_dir()
+        if project_dir.exists() and not list(project_dir.iterdir()):
+            project_dir.rmdir()
+
     @classmethod
     def from_parent(
         cls,
