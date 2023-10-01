@@ -32,9 +32,18 @@ class Project:
         else:
             semaphore = DummySemaphore()
 
+        if self.config.global_config.num_parallel_episodes is not None:
+            global_semaphore = mp.Semaphore(
+                self.config.global_config.num_parallel_episodes
+            )
+        else:
+            global_semaphore = DummySemaphore()
+
         experiments: list[Experiment] = []
         for experiment_config in self.config.experiments:
-            experiment = Experiment(self.config, experiment_config, semaphore)
+            experiment = Experiment(
+                self.config, experiment_config, semaphore, global_semaphore
+            )
             experiments.append(experiment)
             experiment.start()
 

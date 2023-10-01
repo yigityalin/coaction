@@ -25,6 +25,8 @@ class Episode(mp.Process):
         total_stages: int,
         semaphore: DummySemaphore
         | Any,  # TODO: Use multiprocessing.Semaphore instead of Any.
+        global_semaphore: DummySemaphore
+        | Any,  # TODO: Use multiprocessing.Semaphore instead of Any.
     ) -> None:
         """Initialize the episode."""
         super().__init__()
@@ -36,10 +38,12 @@ class Episode(mp.Process):
         self.episode: int = episode
         self.total_stages: int = total_stages
         self.semaphore = semaphore
+        self.global_semaphore = global_semaphore
 
     def run(self) -> None:
         """Run the episode."""
         # Acquire the semaphore to limit the number of parallel episodes.
+        self.global_semaphore.acquire()
         self.semaphore.acquire()
 
         game = self.game
@@ -85,3 +89,4 @@ class Episode(mp.Process):
 
         # Release the semaphore to allow another episode to run.
         self.semaphore.release()
+        self.global_semaphore.release()

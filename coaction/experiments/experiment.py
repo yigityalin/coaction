@@ -38,6 +38,8 @@ class Experiment(mp.Process):
         config: ExperimentConfig,
         semaphore: DummySemaphore
         | Any,  # TODO: Use multiprocessing.Semaphore instead of Any.
+        global_semaphore: DummySemaphore
+        | Any,  # TODO: Use multiprocessing.Semaphore instead of Any.
     ) -> None:
         """Initialize the experiment."""
         super().__init__()
@@ -45,6 +47,7 @@ class Experiment(mp.Process):
         self.config: ExperimentConfig = config
         self.paths = project_config.paths.with_experiment_name(config.name)
         self.semaphore = semaphore
+        self.global_semaphore = global_semaphore
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(name={self.config.name})"
@@ -136,6 +139,7 @@ class Experiment(mp.Process):
                 episode=episode,
                 total_stages=self.config.total_stages,
                 semaphore=semaphore,
+                global_semaphore=self.global_semaphore,
             )
             episodes.append(episode)
             episode.start()

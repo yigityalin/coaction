@@ -76,6 +76,7 @@ class GlobalConfig:
     """
 
     num_parallel_experiments: int
+    num_parallel_episodes: int
     order: list[str]
 
     @classmethod
