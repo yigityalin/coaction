@@ -79,11 +79,11 @@ class AsynchronousSmoothedFictitiousPlay(TwoPlayerAgent):
         self._n_actions = reward_matrix.shape[1]
         self._n_opponent_actions = reward_matrix.shape[2]
 
-        self.counts = np.zeros(self._n_states, dtype=np.int_)
-        self.Q = fp_utils.get_initial_Q(  # pylint: disable=invalid-name
+        self._counts = np.zeros(self._n_states, dtype=np.int_)
+        self._Q = fp_utils.get_initial_Q(  # pylint: disable=invalid-name
             self._initial_Q, self._n_states, self._n_actions, self._n_opponent_actions
         )
-        self.pi = fp_utils.get_initial_pi(  # pylint: disable=invalid-name
+        self._pi = fp_utils.get_initial_pi(  # pylint: disable=invalid-name
             self._initial_pi, self._n_states, self._n_opponent_actions, self.rng
         )
         self.v = np.zeros(  # pylint: disable=invalid-name
@@ -91,23 +91,23 @@ class AsynchronousSmoothedFictitiousPlay(TwoPlayerAgent):
         )
 
         self._utils = fp_utils.SmoothedFictitiousPlayUtils(
-            self.Q, self.pi, self._tau, self.rng
+            self._Q, self._pi, self._tau, self.rng
         )
         self._eye: Final = np.eye(reward_matrix.shape[-1])
 
     def reset(self):
         super().reset()
-        self.counts = np.zeros(self._n_states, dtype=np.int_)
-        self.Q = fp_utils.get_initial_Q(
+        self._counts = np.zeros(self._n_states, dtype=np.int_)
+        self._Q = fp_utils.get_initial_Q(
             self._initial_Q, self._n_states, self._n_actions, self._n_opponent_actions
         )
-        self.pi = fp_utils.get_initial_pi(
+        self._pi = fp_utils.get_initial_pi(
             self._initial_pi, self._n_states, self._n_opponent_actions, self.rng
         )
         self.v = np.zeros(  # pylint: disable=invalid-name
             self._n_states, dtype=np.float_
         )
-        self._utils.reset(self.Q, self.pi)
+        self._utils.reset(self._Q, self._pi)
 
     def act(self, state: StateType) -> ActionType:
         return self._utils.smoothed_best_response(state)
@@ -120,18 +120,18 @@ class AsynchronousSmoothedFictitiousPlay(TwoPlayerAgent):
         next_state: StateType,
         **kwargs,
     ):
-        self.pi[state] += fp_utils.belief_update(
-            self.pi[state],
-            self._alpha(self.counts[state]),
+        self._pi[state] += fp_utils.belief_update(
+            self._pi[state],
+            self._alpha(self._counts[state]),
             actions[1],  # type: ignore
         )
-        self.Q[state] += fp_utils.model_based_sync_q_update(
-            self.Q[state],
+        self._Q[state] += fp_utils.model_based_sync_q_update(
+            self._Q[state],
             self.v,
-            self._beta(self.counts[state]),
+            self._beta(self._counts[state]),
             self._gamma,
             self._R[state],
             self._T[state],
         )
-        self.v = self._utils.smoothed_value_function(self.Q, self.pi)
-        self.counts[state] += 1
+        self.v = self._utils.smoothed_value_function(self._Q, self._pi)
+        self._counts[state] += 1

@@ -69,11 +69,11 @@ class ModelFreeSmoothedFictitiousPlay(TwoPlayerAgent):
         self._n_actions = reward_matrix.shape[1]
         self._n_opponent_actions = reward_matrix.shape[2]
 
-        self.counts = np.zeros_like(reward_matrix)
-        self.Q = fp_utils.get_initial_Q(  # pylint: disable=invalid-name
+        self._counts = np.zeros_like(reward_matrix)
+        self._Q = fp_utils.get_initial_Q(  # pylint: disable=invalid-name
             self._initial_Q, self._n_states, self._n_actions, self._n_opponent_actions
         )
-        self.pi = fp_utils.get_initial_pi(  # pylint: disable=invalid-name
+        self._pi = fp_utils.get_initial_pi(  # pylint: disable=invalid-name
             self._initial_pi, self._n_states, self._n_opponent_actions, self.rng
         )
         self.v = np.zeros(  # pylint: disable=invalid-name
@@ -81,7 +81,7 @@ class ModelFreeSmoothedFictitiousPlay(TwoPlayerAgent):
         )
 
         self._utils = fp_utils.SmoothedFictitiousPlayUtils(
-            self.Q, self.pi, self._tau, self.rng
+            self._Q, self._pi, self._tau, self.rng
         )
 
         self._t = 0
@@ -89,17 +89,17 @@ class ModelFreeSmoothedFictitiousPlay(TwoPlayerAgent):
 
     def reset(self):
         super().reset()
-        self.counts = np.zeros_like(self.counts, dtype=np.int_)
-        self.Q = fp_utils.get_initial_Q(
+        self._counts = np.zeros_like(self._counts, dtype=np.int_)
+        self._Q = fp_utils.get_initial_Q(
             self._initial_Q, self._n_states, self._n_actions, self._n_opponent_actions
         )
-        self.pi = fp_utils.get_initial_pi(
+        self._pi = fp_utils.get_initial_pi(
             self._initial_pi, self._n_states, self._n_opponent_actions, self.rng
         )
         self.v = np.zeros(  # pylint: disable=invalid-name
             self._n_states, dtype=np.float_
         )
-        self._utils.reset(self.Q, self.pi)
+        self._utils.reset(self._Q, self._pi)
 
     def act(self, state: StateType) -> ActionType:
         return self._utils.smoothed_best_response(state)
@@ -112,15 +112,15 @@ class ModelFreeSmoothedFictitiousPlay(TwoPlayerAgent):
         next_state: StateType,
         **kwargs,
     ):
-        self.pi[state] += fp_utils.belief_update(
-            self.pi[state], self._alpha(self.counts[state].sum()), actions[1]  # type: ignore
+        self._pi[state] += fp_utils.belief_update(
+            self._pi[state], self._alpha(self._counts[state].sum()), actions[1]  # type: ignore
         )
-        self.Q[state, *actions] += fp_utils.model_free_q_update(
-            self.Q[state, *actions],
+        self._Q[state, *actions] += fp_utils.model_free_q_update(
+            self._Q[state, *actions],
             self.v[state],
-            self._beta(self.counts[state, *actions]),
+            self._beta(self._counts[state, *actions]),
             self._gamma,
             reward,
         )
-        self.v = self._utils.smoothed_value_function(self.Q, self.pi)
-        self.counts[state, *actions] += 1
+        self.v = self._utils.smoothed_value_function(self._Q, self._pi)
+        self._counts[state, *actions] += 1
