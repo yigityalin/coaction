@@ -1,0 +1,2 @@
+num_parallel_experiments = None  # 'None' means use all available cores. NOTE: consider available memory
+order = None  # list of experiment names that defines the run order of the experiments. Set to 'None' for lexicographic order
