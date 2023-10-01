@@ -2,11 +2,11 @@
 A library for multi-agent learning that aims to accelerate the research.
 
 
-## What is it for?
+## What is coaction for?
 coaction can create and run simulations for any Markov game whose stage ransitions and rewards can be represented by multi-dimensional array. It provides implementations of popular learning dynamics such as fictitious play and individual Q-learning. Since the library is created for research, it also allows users to implement their own agents and run the simulations without the extra burden of parallelization and logging.
 
 
-## How to use?
+## How to use
 Though coaction can be used similar to other Python libraries, coaction provides two main functionalities: creation of the project configurations and running the simulations for given configurations.
 
 To create the project directory and the configuration files, one can use coaction.create. An example script is given below.
