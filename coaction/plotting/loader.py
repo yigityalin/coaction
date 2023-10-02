@@ -7,34 +7,19 @@ from coaction.utils.io import load_object
 from coaction.utils.paths import ProjectPaths
 
 
-_memmap_default_kwargs = dict(dtype=np.float32, mode="r")
-
-
+# TODO: Add np.memmap support
 class LogLoader:
     """Load the logs from a project."""
 
-    def __init__(
-        self, project_path: Path | str, use_memmap=False, **memmap_kwargs
-    ) -> None:
+    def __init__(self, project_path: Path | str, **memmap_kwargs) -> None:
         """Initialize the log loader.
 
         Args:
             project_path (Path | str): The path to the project.
-            use_memmap (bool, optional): Whether to use memmap. Defaults to False. If
-                True, the logs will be loaded as memmaps. Note that this will only work
-                if the log format is compatible with memmap.
-            **memmap_kwargs: Keyword arguments for np.memmap. Ignored if use_memmap is
-                False.
         """
         self.project_path = Path(project_path).resolve()
         self.paths = ProjectPaths(self.project_path)
-
-        if use_memmap:
-            memmap_kwargs = {**_memmap_default_kwargs, **memmap_kwargs}
-            _memmap = partial(np.memmap, **memmap_kwargs)
-            self._loader = _memmap
-        else:
-            self._loader = load_object
+        self._loader = load_object
 
     @property
     def experiment_names(self):
@@ -71,7 +56,12 @@ class LogLoader:
         )
 
     def load_episode_log(
-        self, experiment_name: str, episode: int, agent_name: str, log_name: str
+        self,
+        experiment_name: str,
+        episode: int,
+        agent_name: str,
+        log_name: str,
+        chunk: int | None = None,
     ):
         """Load an episode's log.
 
@@ -80,9 +70,22 @@ class LogLoader:
             episode (int): The episode number.
             agent_name (str): The name of the agent.
             log_name (str): The name of the log.
+            chunk (int | None, optional): The chunk number. Defaults to None. If None,
+                the entire log is loaded. If not None, the chunk is loaded.
         """
-        return self._loader(
-            self.paths.with_experiment_name(experiment_name).get_agent_episode_log_path(
-                episode, agent_name, log_name
+        chunk = 0
+        logs = []
+        while (
+            log_path := self.paths.with_experiment_name(
+                experiment_name
+            ).get_agent_episode_log_path(episode, agent_name, log_name, chunk)
+        ).exists():
+            logs.append(self._loader(log_path))
+            chunk += 1
+        if len(logs) == 0:
+            raise ValueError(
+                f"Could not find log for episode {episode} of agent {agent_name} in experiment {experiment_name}"
             )
-        )
+        if len(logs) == 1:
+            return logs[0]
+        return np.concatenate(logs)

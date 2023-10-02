@@ -315,7 +315,7 @@ class ProjectPaths:
 
     @final
     def get_agent_episode_log_path(
-        self, episode: int, agent_name: str, log_name: str
+        self, episode: int, agent_name: str, log_name: str, chunk: int | None = None
     ) -> Path:
         """Return the path to an episode's agent's log file.
 
@@ -323,8 +323,10 @@ class ProjectPaths:
             episode (int): The episode number.
             agent_name (str): The name of the agent.
             log_name (str): The name of the log file.
+            chunk (int | None, optional): The chunk number. Defaults to None.
         """
-        return self.get_agent_episode_log_dir(episode, agent_name) / log_name
+        stem = f"{log_name}_chunk_{chunk or 0}"
+        return self.get_agent_episode_log_dir(episode, agent_name) / stem
 
     @final
     def get_game_episode_log_dir(self, episode: int) -> Path:
@@ -338,14 +340,18 @@ class ProjectPaths:
         return self.get_episode_log_dir(episode) / "game"
 
     @final
-    def get_game_episode_log_path(self, episode: int, log_name: str) -> Path:
+    def get_game_episode_log_path(
+        self, episode: int, log_name: str, chunk: int | None = None
+    ) -> Path:
         """Return the path to an episode's game's log file.
 
         Args:
             episode (int): The episode number.
             log_name (str): The name of the log file.
+            chunk (int | None, optional): The chunk number. Defaults to None.
         """
-        return self.get_game_episode_log_dir(episode) / log_name
+        stem = f"{log_name}_chunk_{chunk or 0}"
+        return self.get_game_episode_log_dir(episode) / stem
 
     @final
     def with_experiment_name(self, experiment_name: str) -> ProjectPaths:
