@@ -36,12 +36,6 @@ class GameLogger:
             save_reward_history (bool, optional): Whether to save the reward history.
                 Defaults to True.
         """
-        if (
-            not save_state_history
-            and not save_action_history
-            and not save_reward_history
-        ):
-            raise ValueError("At least one history must be saved.")
         self.paths = paths
         self._agent_names = agent_names
         self._log_each = log_each
