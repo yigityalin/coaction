@@ -219,6 +219,7 @@ def _create_file_content(agent_types: list[str], game_type: str):
     multiprocessing_template = _get_multiprocessing_template()
     template = (
         imports_template
+        + multiprocessing_template
         + episodes_and_stages_template
         + agents_template
         + game_template
