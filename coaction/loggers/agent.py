@@ -82,10 +82,10 @@ class AgentLogger:
             for agent, params in zip(agents, self._logged_params):
                 for key, value in agent.logged_params.items():
                     params[key].append(deepcopy(value))
-        if self._save_in_chunks is not None:
-            h_length = int(np.ceil(stage / self._log_each))
-            if h_length % self._save_in_chunks == 0:
-                self._save_chunk(agents)
+            if self._save_in_chunks is not None:
+                h_length = int(np.ceil(stage / self._log_each))
+                if h_length % self._save_in_chunks == 0:
+                    self._save_chunk(agents)
 
     def _save_chunk(self, agents: list[Agent]):
         self._save_agent_params(self._episode, agents)
@@ -109,7 +109,7 @@ class AgentLogger:
                     save_object(
                         value,
                         self.paths.get_agent_episode_log_path(
-                            episode, agent.name, key, self._current_chunk
+                            episode, agent.name, key.lstrip("_"), self._current_chunk
                         ),
                         allow_file_exists=True,
                     )
