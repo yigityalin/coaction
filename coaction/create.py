@@ -261,8 +261,7 @@ def _load_agents_template(
 
 
 def _get_imports_template() -> str:
-    template = "import typing\n\n"
-    template += "from coaction import agents, loggers, games, utils\n"
+    template = "from coaction import agents, loggers, games, utils\n"
     return template + "\n\n"
 
 
