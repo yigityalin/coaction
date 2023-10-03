@@ -10,7 +10,7 @@ from coaction.utils.paths import ProjectPaths
 class LogLoader:
     """Load the logs from a project."""
 
-    def __init__(self, project_path: Path | str, **memmap_kwargs) -> None:
+    def __init__(self, project_path: Path | str) -> None:
         """Initialize the log loader.
 
         Args:
@@ -20,16 +20,23 @@ class LogLoader:
         self.paths = ProjectPaths(self.project_path)
         self._loader = load_object
 
-    @property
-    def experiment_names(self):
-        """Return the names of the experiments."""
-        return [
-            path.name
-            for path in self.paths.get_project_config_dir().iterdir()
-            if path.is_dir()
-        ]
+    def get_project_paths(self, run: int, experiment_name: str):
+        """Get the paths to the project.
 
-    def load_agent_log(self, experiment_name: str, agent_name: str, log_name: str):
+        Args:
+            run (int): The run number.
+            experiment_name (str): The name of the experiment.
+        """
+        paths = self.paths
+        if run is not None:
+            paths = paths.with_run(run)
+        if experiment_name is not None:
+            paths = paths.with_experiment_name(experiment_name)
+        return paths
+
+    def load_agent_log(
+        self, run: int, experiment_name: str, agent_name: str, log_name: str
+    ):
         """Load an agent's log.
 
         Args:
@@ -38,12 +45,12 @@ class LogLoader:
             log_name (str): The name of the log.
         """
         return self._loader(
-            self.paths.with_experiment_name(experiment_name).get_agent_log_path(
-                agent_name, log_name
-            )
+            self.paths.with_run(run)
+            .with_experiment_name(experiment_name)
+            .get_agent_log_path(agent_name, log_name)
         )
 
-    def load_game_log(self, experiment_name: str, log_name: str):
+    def load_game_log(self, run: int, experiment_name: str, log_name: str):
         """Load a game's log.
 
         Args:
@@ -51,11 +58,14 @@ class LogLoader:
             log_name (str): The name of the log.
         """
         return self._loader(
-            self.paths.with_experiment_name(experiment_name).get_game_log_path(log_name)
+            self.paths.with_run(run)
+            .with_experiment_name(experiment_name)
+            .get_game_log_path(log_name)
         )
 
     def load_episode_log(
         self,
+        run: int,
         experiment_name: str,
         episode: int,
         agent_name: str,
@@ -75,9 +85,9 @@ class LogLoader:
         chunk = 0
         logs = []
         while (
-            log_path := self.paths.with_experiment_name(
-                experiment_name
-            ).get_agent_episode_log_path(episode, agent_name, log_name, chunk)
+            log_path := self.paths.with_run(run)
+            .with_experiment_name(experiment_name)
+            .get_agent_episode_log_path(episode, agent_name, log_name, chunk)
         ).exists():
             logs.append(self._loader(log_path))
             chunk += 1

@@ -354,6 +354,17 @@ class ProjectPaths:
         return self.get_game_episode_log_dir(episode) / stem
 
     @final
+    def with_run(self, run: int) -> ProjectPaths:
+        """Return a new ProjectPaths object with a new run number.
+
+        Args:
+            experiment_name (str): The name of the experiment.
+        """
+        paths = ProjectPaths(self.project_dir, self.experiment_name)
+        paths.run = run
+        return paths
+
+    @final
     def with_experiment_name(self, experiment_name: str) -> ProjectPaths:
         """Return a new ProjectPaths object with a new experiment name.
 
