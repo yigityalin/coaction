@@ -1,8 +1,11 @@
 """Experiment class."""
 
+from copy import deepcopy
 from typing import Any, NamedTuple
 import inspect
 import multiprocessing as mp
+
+import numpy as np
 
 from coaction.agents.agent import Agent
 from coaction.experiments.config import ExperimentConfig, ProjectConfig
@@ -48,6 +51,7 @@ class Experiment(mp.Process):
         self.paths = project_config.paths.with_experiment_name(config.name)
         self.semaphore = semaphore
         self.global_semaphore = global_semaphore
+        self._agent_seed_sequences: dict[int, np.random.SeedSequence] = {}
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(name={self.config.name})"
@@ -72,7 +76,7 @@ class Experiment(mp.Process):
         requirements = [
             _inspect_agent(agent_type) for agent_type in self.config.agent_types
         ]
-        agent_kwargs = self.config.agent_kwargs.copy()
+        agent_kwargs = deepcopy(self.config.agent_kwargs)
         for agent_idx, requirement in enumerate(requirements):
             reward_matrix, transition_matrix = game.view(agent_idx)
             if requirement.reward_matrix:
@@ -107,6 +111,17 @@ class Experiment(mp.Process):
         )
         return progress_logger
 
+    def _update_and_get_seed(self, agent_idx: int) -> int:
+        if agent_idx not in self._agent_seed_sequences:
+            self._agent_seed_sequences[agent_idx] = np.random.SeedSequence(
+                self.config.agent_kwargs[agent_idx]["seed"]
+            )
+        else:
+            self._agent_seed_sequences[agent_idx] = self._agent_seed_sequences[
+                agent_idx
+            ].spawn(1)[0]
+        return self._agent_seed_sequences[agent_idx].generate_state(1)[0]
+
     def run(self):
         """Run the experiment."""
         # Acquire the semaphore to limit the number of parallel experiments.
@@ -132,7 +147,12 @@ class Experiment(mp.Process):
         for episode in range(self.config.total_episodes):
             episode = Episode(
                 game=game.clone(),
-                agents=[agent.clone() for agent in agents],
+                agents=[
+                    agent.clone(
+                        seed=self._update_and_get_seed(agent_idx)
+                    )
+                    for agent_idx, agent in enumerate(agents)
+                ],
                 agent_logger=agent_logger.clone(),
                 game_logger=game_logger.clone(),
                 progress_logger=progress_logger.clone(),

@@ -110,7 +110,7 @@ class Agent(ABC):
     @abstractmethod
     def reset(self):
         """Reset the agent's parameters."""
-        self.reset_rng()
+        self._rng = None
 
     @abstractmethod
     def act(self, state: StateType) -> ActionType:
@@ -139,13 +139,11 @@ class Agent(ABC):
             **kwargs: Keyword arguments.
         """
 
-    def reset_rng(self):
-        """Reset the random number generator."""
-        self._rng = self.rng.spawn(1)[0]
-
-    def clone(self):
+    def clone(self, seed: int = None):
         """Return a deep copy of the agent."""
-        return deepcopy(self)
+        agent = deepcopy(self)
+        agent._seed = seed  # pylint: disable=protected-access
+        return agent
 
     def save(self, path: str):
         """Save the agent to a file.
