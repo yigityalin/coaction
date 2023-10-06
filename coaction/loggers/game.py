@@ -147,10 +147,11 @@ class GameLogger:
         """Save a history."""
         for agent_name, hist in history.items():
             if not len(hist) == 0:
+                chunk = self._current_chunk if self._current_chunk is not None else 0
                 save_object(
                     hist,
                     self.paths.get_agent_episode_log_path(
-                        episode, agent_name, log_name, self._current_chunk
+                        episode, agent_name, log_name, chunk
                     ),
                     allow_file_exists=True,
                 )

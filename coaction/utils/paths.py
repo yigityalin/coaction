@@ -159,9 +159,29 @@ class ProjectPaths:
         ]
 
     @final
+    def get_experiment_run_config_paths(self) -> list[Path]:
+        """Return the paths to all the experiment config files.
+
+        The experiment config file is the file that contains the configuration for an experiment.
+        """
+        return [
+            path
+            for path in self.get_project_run_config_dir().iterdir()
+            if path.is_file()
+            and not path.stem.startswith("_")
+            and path.suffix == ".py"
+            and path.stem != self.project_name
+        ]
+
+    @final
     def get_experiment_names(self) -> list[str]:
         """Return the names of all the experiments."""
         return [path.stem for path in self.get_experiment_config_paths()]
+
+    @final
+    def get_run_experiment_names(self) -> list[str]:
+        """Return the names of all the experiments."""
+        return [path.stem for path in self.get_experiment_run_config_paths()]
 
     @final
     def get_project_logs_dir(self) -> Path:
@@ -190,6 +210,11 @@ class ProjectPaths:
     def get_project_run_config_dir(self) -> Path:
         """Return the path to a project run config directory."""
         return self.get_project_run_log_dir() / "configs"
+
+    @final
+    def get_project_run_config_path(self) -> Path:
+        """Return the path to a project run config file."""
+        return self.get_project_run_config_dir() / f"{self.experiment_name}.py"
 
     @final
     def get_experiment_log_dirs(self) -> list[Path]:
@@ -315,7 +340,7 @@ class ProjectPaths:
 
     @final
     def get_agent_episode_log_path(
-        self, episode: int, agent_name: str, log_name: str, chunk: int | None = None
+        self, episode: int, agent_name: str, log_name: str, chunk: int
     ) -> Path:
         """Return the path to an episode's agent's log file.
 
@@ -323,10 +348,25 @@ class ProjectPaths:
             episode (int): The episode number.
             agent_name (str): The name of the agent.
             log_name (str): The name of the log file.
-            chunk (int | None, optional): The chunk number. Defaults to None.
+            chunk (int): The chunk number
         """
-        stem = f"{log_name}_chunk_{chunk or 0}"
+        stem = f"{log_name}_chunk_{chunk}"
         return self.get_agent_episode_log_dir(episode, agent_name) / stem
+
+    @final
+    def get_agent_episode_log_paths(self, episode: int, agent_name: str, log_name):
+        """Return the paths to an episode's agent's log files.
+
+        Args:
+            episode (int): The episode number.
+            agent_name (str): The name of the agent.
+            log_name (str): The name of the log file.
+        """
+        directory = self.get_agent_episode_log_dir(episode, agent_name)
+        return sorted(
+            directory.glob(f"{log_name}_chunk_*"),
+            key=lambda x: int(x.stem.split("_")[-1]),
+        )
 
     @final
     def get_game_episode_log_dir(self, episode: int) -> Path:
@@ -371,4 +411,6 @@ class ProjectPaths:
         Args:
             experiment_name (str): The name of the experiment.
         """
-        return ProjectPaths(self.project_dir, experiment_name)
+        paths = ProjectPaths(self.project_dir, experiment_name)
+        paths.run = self.run
+        return paths

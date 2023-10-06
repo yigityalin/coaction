@@ -106,10 +106,16 @@ class AgentLogger:
         for agent, params in zip(agents, self._logged_params):
             for key, value in params.items():
                 if not len(value) == 0:
+                    chunk = (
+                        self._current_chunk if self._current_chunk is not None else 0
+                    )
                     save_object(
                         value,
                         self.paths.get_agent_episode_log_path(
-                            episode, agent.name, key.lstrip("_"), self._current_chunk
+                            episode,
+                            agent.name,
+                            key.lstrip("_"),
+                            chunk,
                         ),
                         allow_file_exists=True,
                     )

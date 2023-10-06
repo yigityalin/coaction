@@ -1,8 +1,12 @@
+"""Implements the LogLoader class, which loads logs of a project run."""
+
 from pathlib import Path
 
 import numpy as np
 
-from coaction.utils.io import load_object
+from coaction.experiments.config import ExperimentConfig
+from coaction.utils.io import find_and_load_object
+from coaction.utils.modules import load_module
 from coaction.utils.paths import ProjectPaths
 
 
@@ -18,7 +22,7 @@ class LogLoader:
         """
         self.project_path = Path(project_path).resolve()
         self.paths = ProjectPaths(self.project_path)
-        self._loader = load_object
+        self._loader = find_and_load_object
 
     def get_project_paths(self, run: int, experiment_name: str):
         """Get the paths to the project.
@@ -82,15 +86,18 @@ class LogLoader:
             chunk (int | None, optional): The chunk number. Defaults to None. If None,
                 the entire log is loaded. If not None, the chunk is loaded.
         """
-        chunk = 0
-        logs = []
-        while (
-            log_path := self.paths.with_run(run)
+        if chunk is not None:
+            return self._loader(
+                self.paths.with_run(run)
+                .with_experiment_name(experiment_name)
+                .get_agent_episode_log_path(episode, agent_name, log_name, chunk)
+            )
+        log_files = (
+            self.paths.with_run(run)
             .with_experiment_name(experiment_name)
-            .get_agent_episode_log_path(episode, agent_name, log_name, chunk)
-        ).exists():
-            logs.append(self._loader(log_path))
-            chunk += 1
+            .get_agent_episode_log_paths(episode, agent_name, log_name)
+        )
+        logs = [self._loader(log_file) for log_file in log_files]
         if len(logs) == 0:
             raise ValueError(
                 f"Could not find log for episode {episode} of agent {agent_name} in experiment {experiment_name}"
@@ -98,3 +105,35 @@ class LogLoader:
         if len(logs) == 1:
             return logs[0]
         return np.concatenate(logs)
+
+    def load_experiment_logs(
+        self, run: int, experiment_name: str, agent_name: str, log_name: str
+    ):
+        """Load an experiment's log.
+
+        Args:
+            experiment_name (str): The name of the experiment.
+            log_name (str): The name of the log.
+        """
+        config = self.load_experiment_config(run, experiment_name)
+        logs = [
+            self.load_episode_log(run, experiment_name, episode, agent_name, log_name)
+            for episode in range(config.total_episodes)
+        ]
+        return np.array(logs)
+
+    def load_experiment_config(
+        self, run: int, experiment_name: str
+    ) -> ExperimentConfig:
+        """Load the experiment config.
+
+        Args:
+            run (int): The run number.
+            experiment_name (str): The name of the experiment.
+        """
+        config_path = (
+            self.paths.with_run(run)
+            .with_experiment_name(experiment_name)
+            .get_project_run_config_path()
+        )
+        return load_module(config_path)
