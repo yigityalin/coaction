@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "coaction"
-version = "0.0.8"
+version = "0.0.9"
 authors = [
   { name="Yiğit Yalın", email="yigityalin@outlook.com" },
 ]
