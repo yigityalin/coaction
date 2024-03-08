@@ -400,9 +400,7 @@ class ProjectPaths:
         Args:
             experiment_name (str): The name of the experiment.
         """
-        paths = ProjectPaths(self.project_dir, run_name, self.experiment_name)
-        paths.run_name = run_name
-        return paths
+        return ProjectPaths(self.project_dir, run_name, self.experiment_name)
 
     @final
     def with_experiment_name(self, experiment_name: str) -> ProjectPaths:
@@ -411,6 +409,4 @@ class ProjectPaths:
         Args:
             experiment_name (str): The name of the experiment.
         """
-        paths = ProjectPaths(self.project_dir, self.run_name, experiment_name)
-        paths.run_name = self.run_name
-        return paths
+        return ProjectPaths(self.project_dir, self.run_name, experiment_name)
