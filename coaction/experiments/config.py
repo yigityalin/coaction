@@ -5,6 +5,7 @@ from typing import Any
 import dataclasses
 import shutil
 
+from coaction.experiments.episode import Episode, DefaultEpisode
 from coaction.utils.modules import load_module
 from coaction.utils.paths import ProjectPaths
 
@@ -43,14 +44,16 @@ class ExperimentConfig:
     total_episodes: int
     total_stages: int
     num_parallel_episodes: int
+    episode_class: type[Episode]
 
     @classmethod
     def from_py_file(cls, path: Path | str):
         """Return an experiment config from a Python file."""
         module = load_module(path)
         fields = [field for field in dataclasses.fields(cls) if field.name != "name"]
-        kwargs = {field.name: getattr(module, field.name) for field in fields}
-        kwargs["name"] = getattr(module, "name", None) or module.__name__
+        kwargs = {field.name: getattr(module, field.name, None) for field in fields}
+        kwargs["name"] = getattr(module, "name", module.__name__)
+        kwargs["episode_class"] = getattr(module, "episode_class", DefaultEpisode)
         config = cls(**kwargs)  # type: ignore
         config._validate()
         return config

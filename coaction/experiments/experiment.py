@@ -142,9 +142,9 @@ class Experiment(mp.Process):
         else:
             semaphore = DummySemaphore()
 
-        episodes: list[Episode] = []
+        episodes: list[self.config.episode_class] = []
         for episode in range(self.config.total_episodes):
-            episode = DefaultEpisode(
+            episode = self.config.episode_class(
                 game=game.clone(),
                 agents=[
                     agent.clone(seed=self._update_and_get_seed(agent_idx))
