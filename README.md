@@ -3,7 +3,7 @@ A library for multi-agent learning that aims to accelerate the research.
 
 
 ## What is coaction for?
-coaction can create and run simulations for any Markov game whose stage ransitions and rewards can be represented by multi-dimensional array. It provides implementations of popular learning dynamics such as fictitious play and individual Q-learning. Since the library is created for research, it also allows users to implement their own agents and run the simulations without the extra burden of parallelization and logging.
+coaction can create and run simulations for any Markov game whose stage transitions and rewards can be represented by multi-dimensional array. It provides implementations of popular learning dynamics such as fictitious play and individual Q-learning. Since the library is created for research, it also allows users to implement their own agents and run the simulations without the extra burden of parallelization and logging.
 
 
 ## How to use
