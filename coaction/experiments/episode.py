@@ -1,6 +1,7 @@
 """Implementation of episodes representing a single game between agents."""
 
-from typing import Any
+from multiprocessing.synchronize import Semaphore
+import abc
 import multiprocessing as mp
 
 from coaction.agents.agent import Agent
@@ -11,7 +12,23 @@ from coaction.loggers.game import GameLogger
 from coaction.loggers.progress import ProgressLogger
 
 
-class Episode(mp.Process):
+class Episode(abc.ABC, mp.Process):
+    """An abstract class representing a single game between agents.
+
+    Every subclass must call the `__init__` method of this class.
+    Every subclass must implement the `run` method.
+    """
+
+    def __init__(self) -> None:
+        """Initialize the episode."""
+        mp.Process.__init__(self)
+
+    @abc.abstractmethod
+    def run(self) -> None:
+        """Run the episode."""
+
+
+class DefaultEpisode(Episode):
     """A single game between agents."""
 
     def __init__(
@@ -23,12 +40,9 @@ class Episode(mp.Process):
         progress_logger: ProgressLogger,
         episode: int,
         total_stages: int,
-        semaphore: DummySemaphore
-        | Any,  # TODO: Use multiprocessing.Semaphore instead of Any.
-        global_semaphore: DummySemaphore
-        | Any,  # TODO: Use multiprocessing.Semaphore instead of Any.
+        semaphore: DummySemaphore | Semaphore,
+        global_semaphore: DummySemaphore | Semaphore,
     ) -> None:
-        """Initialize the episode."""
         super().__init__()
         self.game: MarkovGame = game
         self.agents: list[Agent] = agents
@@ -41,7 +55,6 @@ class Episode(mp.Process):
         self.global_semaphore = global_semaphore
 
     def run(self) -> None:
-        """Run the episode."""
         # Acquire the semaphore to limit the number of parallel episodes.
         self.global_semaphore.acquire()
         self.semaphore.acquire()

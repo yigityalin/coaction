@@ -12,7 +12,7 @@ from coaction.games.game import RewardType
 def continuation_payoff(
     value_function: npt.NDArray[RewardType],
     reward_matrix: npt.NDArray[RewardType],
-    transition_matrix: npt.NDArray[RewardType],
+    transition_matrix: npt.NDArray[np.float_],
     gamma: float,
 ) -> np.ndarray:
     """Return the continuation payoff.
@@ -72,7 +72,7 @@ def solve_minimax(arr: npt.NDArray[RewardType]):
 
 
 def shapley_value(
-    T: npt.NDArray[RewardType],  # pylint: disable=invalid-name
+    T: npt.NDArray[np.float_],  # pylint: disable=invalid-name
     R: npt.NDArray[RewardType],  # pylint: disable=invalid-name
     gamma: float,
     n_iterations=100,
@@ -89,6 +89,11 @@ def shapley_value(
         The discount factor.
     n_iterations : int, optional
         The number of iterations to run, by default 100
+
+    Returns
+    -------
+    np.ndarray
+        The Shapley value.
     """
     n_states = R.shape[0]
     Q = np.zeros_like(R)  # pylint: disable=invalid-name
@@ -103,7 +108,7 @@ def shapley_value(
 
 def generate_zsmg(
     n_states, n_actions: Sequence[int], min_reward=0.0, max_reward=1.0, seed=None
-) -> tuple[npt.NDArray[RewardType], npt.NDArray[RewardType]]:
+) -> tuple[npt.NDArray[RewardType], npt.NDArray[np.float_]]:
     """Generate a two-player zero-sum Markov game.
 
     Parameters
@@ -121,7 +126,7 @@ def generate_zsmg(
 
     Returns
     -------
-    tuple[npt.NDArray[RewardType], npt.NDArray[RewardType]]
+    tuple[npt.NDArray[RewardType], npt.NDArray[np.float_]]
         The reward matrix and the transition matrix.
 
     """

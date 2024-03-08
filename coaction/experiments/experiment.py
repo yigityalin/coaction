@@ -1,7 +1,8 @@
 """Experiment class."""
 
 from copy import deepcopy
-from typing import Any, NamedTuple
+from multiprocessing.synchronize import Semaphore
+from typing import NamedTuple
 import inspect
 import multiprocessing as mp
 
@@ -9,7 +10,7 @@ import numpy as np
 
 from coaction.agents.agent import Agent
 from coaction.experiments.config import ExperimentConfig, ProjectConfig
-from coaction.experiments.episode import Episode
+from coaction.experiments.episode import DefaultEpisode
 from coaction.experiments.multiprocessing import DummySemaphore
 from coaction.games.game import MarkovGame
 from coaction.loggers.agent import AgentLogger
@@ -39,10 +40,8 @@ class Experiment(mp.Process):
         self,
         project_config: ProjectConfig,
         config: ExperimentConfig,
-        semaphore: DummySemaphore
-        | Any,  # TODO: Use multiprocessing.Semaphore instead of Any.
-        global_semaphore: DummySemaphore
-        | Any,  # TODO: Use multiprocessing.Semaphore instead of Any.
+        semaphore: DummySemaphore | Semaphore,
+        global_semaphore: DummySemaphore | Semaphore,
     ) -> None:
         """Initialize the experiment."""
         super().__init__()
@@ -145,12 +144,10 @@ class Experiment(mp.Process):
 
         episodes: list[Episode] = []
         for episode in range(self.config.total_episodes):
-            episode = Episode(
+            episode = DefaultEpisode(
                 game=game.clone(),
                 agents=[
-                    agent.clone(
-                        seed=self._update_and_get_seed(agent_idx)
-                    )
+                    agent.clone(seed=self._update_and_get_seed(agent_idx))
                     for agent_idx, agent in enumerate(agents)
                 ],
                 agent_logger=agent_logger.clone(),
