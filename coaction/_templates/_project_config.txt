@@ -1,4 +1,19 @@
-run_name =  # The name of the project run. The logs will be saved under logs/run_name.
-num_parallel_experiments = None  # 'None' means use all available cores. NOTE: consider available memory
-num_parallel_episodes = None  # 'None' means use all available cores. This restricts the total number of parallel episodes in all experiments combined.
-order = None  # list of experiment names that defines the run order of the experiments. Set to 'None' for lexicographic order
+# The name of the project run.
+# The logs will be saved under logs/run_name.
+run_name = 
+
+# Set the total number of experiments to run in parallel
+# 'None' means use all available cores.
+# Consider available CPU and memory.
+num_parallel_experiments = None
+
+# Set the total number of episoders to run in parallel.
+# Note that this restricts the total number of parallel episodes in all experiments combined.
+# Use the experiment configurations to restrict the number of parallel episodes for a single experiment.
+# Consider available CPU and memory.
+# 'None' means use all available cores.
+num_parallel_episodes = None 
+
+# list of experiment names that defines the run order of the experiments.
+# Set to 'None' for lexicographic order.
+order = None
