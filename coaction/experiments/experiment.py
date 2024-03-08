@@ -10,7 +10,6 @@ import numpy as np
 
 from coaction.agents.agent import Agent
 from coaction.experiments.config import ExperimentConfig, ProjectConfig
-from coaction.experiments.episode import DefaultEpisode
 from coaction.experiments.multiprocessing import DummySemaphore
 from coaction.games.game import MarkovGame
 from coaction.loggers.agent import AgentLogger

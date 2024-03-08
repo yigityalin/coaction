@@ -16,8 +16,8 @@ class ProjectPaths:
     def __init__(
         self,
         project_dir: Path | str,
+        run_name: str | None = None,
         experiment_name: str | None = None,
-        increment_run: bool = False,
     ) -> None:
         """Initialize the logger paths.
 
@@ -29,11 +29,7 @@ class ProjectPaths:
         self.project_dir: Path = Path(project_dir).resolve()
         self.project_name: str = self.project_dir.stem
         self.experiment_name: str | None = experiment_name
-        self.run: int = self._get_run()
-        if increment_run:
-            self._get_project_run_log_dir(self.run).mkdir(parents=True, exist_ok=True)
-        elif self.run != 0:
-            self.run -= 1
+        self._run_name: str = run_name
 
     def __repr__(self) -> str:
         """Return the string representation of the logger paths."""
@@ -42,19 +38,23 @@ class ProjectPaths:
             f"experiment_name={self.experiment_name})"
         )
 
-    def _get_run(self) -> int:
-        run = 0
-        while self._get_project_run_log_dir(run).exists():
-            run += 1
-        return run
+    @property
+    def run_name(self) -> str:
+        """Return the run name."""
+        return self._run_name
 
-    def _get_project_run_log_dir(self, run: int) -> Path:
+    @run_name.setter
+    def run_name(self, run_name: str):
+        """Set the run name."""
+        self._run_name = run_name
+
+    def _get_project_run_log_dir(self) -> Path:
         """Return the path to a project run log directory.
 
         Args:
             run (int): The run number.
         """
-        return self.get_project_logs_dir() / f"run_{run}"
+        return self.get_project_logs_dir() / self.run_name
 
     def cleanup(self) -> None:
         """Remove the project run log directory."""
@@ -199,7 +199,7 @@ class ProjectPaths:
         The project log directory is the directory
         where all the logs for a single project run is stored.
         """
-        return self._get_project_run_log_dir(self.run)
+        return self._get_project_run_log_dir()
 
     @final
     def get_project_run_progress_log_path(self) -> Path:
@@ -394,14 +394,14 @@ class ProjectPaths:
         return self.get_game_episode_log_dir(episode) / stem
 
     @final
-    def with_run(self, run: int) -> ProjectPaths:
+    def with_run(self, run_name) -> ProjectPaths:
         """Return a new ProjectPaths object with a new run number.
 
         Args:
             experiment_name (str): The name of the experiment.
         """
-        paths = ProjectPaths(self.project_dir, self.experiment_name)
-        paths.run = run
+        paths = ProjectPaths(self.project_dir, run_name, self.experiment_name)
+        paths.run_name = run_name
         return paths
 
     @final
@@ -411,6 +411,6 @@ class ProjectPaths:
         Args:
             experiment_name (str): The name of the experiment.
         """
-        paths = ProjectPaths(self.project_dir, experiment_name)
-        paths.run = self.run
+        paths = ProjectPaths(self.project_dir, self.run_name, experiment_name)
+        paths.run_name = self.run_name
         return paths

@@ -22,7 +22,6 @@ def main(args: argparse.Namespace):
     Args:
         args (argparse.Namespace): The command line arguments.
     """
-    print(args.project)
     config = ProjectConfig.from_dir(args.project)
     project = Project(config)
     project.run()

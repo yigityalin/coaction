@@ -24,7 +24,7 @@ class LogLoader:
         self.paths = ProjectPaths(self.project_path)
         self._loader = find_and_load_object
 
-    def get_project_paths(self, run: int, experiment_name: str):
+    def get_project_paths(self, run_name: str, experiment_name: str):
         """Get the paths to the project.
 
         Args:
@@ -32,14 +32,14 @@ class LogLoader:
             experiment_name (str): The name of the experiment.
         """
         paths = self.paths
-        if run is not None:
-            paths = paths.with_run(run)
+        if run_name is not None:
+            paths = paths.with_run(run_name)
         if experiment_name is not None:
             paths = paths.with_experiment_name(experiment_name)
         return paths
 
     def load_agent_log(
-        self, run: int, experiment_name: str, agent_name: str, log_name: str
+        self, run_name: str, experiment_name: str, agent_name: str, log_name: str
     ):
         """Load an agent's log.
 
@@ -49,12 +49,12 @@ class LogLoader:
             log_name (str): The name of the log.
         """
         return self._loader(
-            self.paths.with_run(run)
+            self.paths.with_run(run_name)
             .with_experiment_name(experiment_name)
             .get_agent_log_path(agent_name, log_name)
         )
 
-    def load_game_log(self, run: int, experiment_name: str, log_name: str):
+    def load_game_log(self, run_name: str, experiment_name: str, log_name: str):
         """Load a game's log.
 
         Args:
@@ -62,14 +62,14 @@ class LogLoader:
             log_name (str): The name of the log.
         """
         return self._loader(
-            self.paths.with_run(run)
+            self.paths.with_run(run_name)
             .with_experiment_name(experiment_name)
             .get_game_log_path(log_name)
         )
 
     def load_episode_log(
         self,
-        run: int,
+        run_name: str,
         experiment_name: str,
         episode: int,
         agent_name: str,
@@ -88,12 +88,12 @@ class LogLoader:
         """
         if chunk is not None:
             return self._loader(
-                self.paths.with_run(run)
+                self.paths.with_run(run_name)
                 .with_experiment_name(experiment_name)
                 .get_agent_episode_log_path(episode, agent_name, log_name, chunk)
             )
         log_files = (
-            self.paths.with_run(run)
+            self.paths.with_run(run_name)
             .with_experiment_name(experiment_name)
             .get_agent_episode_log_paths(episode, agent_name, log_name)
         )
@@ -107,7 +107,7 @@ class LogLoader:
         return np.concatenate(logs)
 
     def load_experiment_logs(
-        self, run: int, experiment_name: str, agent_name: str, log_name: str
+        self, run_name: str, experiment_name: str, agent_name: str, log_name: str
     ):
         """Load an experiment's log.
 
@@ -115,15 +115,17 @@ class LogLoader:
             experiment_name (str): The name of the experiment.
             log_name (str): The name of the log.
         """
-        config = self.load_experiment_config(run, experiment_name)
+        config = self.load_experiment_config(run_name, experiment_name)
         logs = [
-            self.load_episode_log(run, experiment_name, episode, agent_name, log_name)
+            self.load_episode_log(
+                run_name, experiment_name, episode, agent_name, log_name
+            )
             for episode in range(config.total_episodes)
         ]
         return np.array(logs)
 
     def load_experiment_config(
-        self, run: int, experiment_name: str
+        self, run_name: str, experiment_name: str
     ) -> ExperimentConfig:
         """Load the experiment config.
 
@@ -132,7 +134,7 @@ class LogLoader:
             experiment_name (str): The name of the experiment.
         """
         config_path = (
-            self.paths.with_run(run)
+            self.paths.with_run(run_name)
             .with_experiment_name(experiment_name)
             .get_project_run_config_path()
         )

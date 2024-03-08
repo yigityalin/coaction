@@ -78,6 +78,7 @@ class GlobalConfig:
         order (list[str]): The order in which to run the experiments.
     """
 
+    run_name: str
     num_parallel_experiments: int
     num_parallel_episodes: int
     order: list[str]
@@ -116,12 +117,21 @@ class ProjectConfig:
     @classmethod
     def from_dir(cls, path: Path | str):
         """Return a project config from a directory."""
-        paths = ProjectPaths(path, increment_run=True)
+        paths = ProjectPaths(path)
         project_dir = paths.get_project_dir()
-        if not project_dir.is_dir() or not paths.get_project_config_dir().is_dir():
+        global_config = GlobalConfig.from_py_file(paths.get_project_config_path())
+        paths.run_name = global_config.run_name
+        if not project_dir.is_dir():
             paths.cleanup()
             raise ValueError(f"Path {path} is not a directory.")
-        global_config = GlobalConfig.from_py_file(paths.get_project_config_path())
+        if not paths.get_project_config_dir().is_dir():
+            paths.cleanup()
+            raise ValueError(f"Could not find project config directory in {path}.")
+        if paths.get_project_run_log_dir().exists():
+            raise ValueError(
+                f"'{global_config.run_name}' already exists in {paths.get_project_logs_dir()}. "
+                "Please choose a different name."
+            )
         experiments = sorted(
             [
                 ExperimentConfig.from_py_file(experiment_path)
