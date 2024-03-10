@@ -1,12 +1,9 @@
 """Implementation of Progress logger"""
 
-from copy import deepcopy
-from io import TextIOWrapper
-
-from coaction.loggers.logger import Logger
+from coaction.experiments.callbacks import Callback
 
 
-class ProgressLogger(Logger):
+class ProgressLogger(Callback):
     """Currently a dummy class for logging progress."""
 
     def __init__(self, *args, **kwargs): ...

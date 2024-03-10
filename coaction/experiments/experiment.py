@@ -134,7 +134,7 @@ class Experiment(mp.Process):
         ) = self._construct_experiment()
         agent_logger.on_experiment_begin(agents)
         game_logger.on_experiment_begin(game)
-        progress_logger.on_experiment_begin()
+        progress_logger.on_experiment_begin(agents)
 
         if self.config.num_parallel_episodes is not None:
             semaphore = mp.Semaphore(self.config.num_parallel_episodes)
@@ -165,7 +165,7 @@ class Experiment(mp.Process):
 
         agent_logger.on_experiment_end(agents)
         game_logger.on_experiment_end(game)
-        progress_logger.on_experiment_end()
+        progress_logger.on_experiment_end(agents)
 
         # Release the semaphore to allow another experiment to run.
         self.semaphore.release()

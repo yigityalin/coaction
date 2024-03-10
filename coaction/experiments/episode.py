@@ -15,21 +15,10 @@ from coaction.loggers.progress import ProgressLogger
 class Episode(abc.ABC, mp.Process):
     """An abstract class representing a single game between agents.
 
-    Every subclass must call the `__init__` method of this class.
-    Every subclass must implement the `run` method.
+    Every subclass must call the `__init__` method of the superclass in its
+    `__init__` method.
+    Every subclass must implement the `play` method.
     """
-
-    def __init__(self) -> None:
-        """Initialize the episode."""
-        mp.Process.__init__(self)
-
-    @abc.abstractmethod
-    def run(self) -> None:
-        """Run the episode."""
-
-
-class DefaultEpisode(Episode):
-    """A single game between agents."""
 
     def __init__(
         self,
@@ -43,7 +32,9 @@ class DefaultEpisode(Episode):
         semaphore: DummySemaphore | Semaphore,
         global_semaphore: DummySemaphore | Semaphore,
     ) -> None:
-        super().__init__()
+        """Initialize the episode."""
+        mp.Process.__init__(self)
+
         self.game: MarkovGame = game
         self.agents: list[Agent] = agents
         self.agent_logger: AgentLogger = agent_logger
@@ -55,30 +46,82 @@ class DefaultEpisode(Episode):
         self.global_semaphore = global_semaphore
 
     def run(self) -> None:
-        # Acquire the semaphore to limit the number of parallel episodes.
+        """Run the episode."""
         self.global_semaphore.acquire()
         self.semaphore.acquire()
 
-        game = self.game
-        agents = self.agents
-        agent_logger = self.agent_logger
-        game_logger = self.game_logger
-        progress_logger = self.progress_logger
+        self.play(
+            game=self.game,
+            agents=self.agents,
+            agent_logger=self.agent_logger,
+            game_logger=self.game_logger,
+            progress_logger=self.progress_logger,
+            episode=self.episode,
+            total_stages=self.total_stages,
+        )
 
-        agent_logger.on_episode_begin(self.episode, agents)
-        game_logger.on_episode_begin(self.episode, game)
-        progress_logger.on_episode_begin(self.episode)
+        # Release the semaphore to allow another episode to run.
+        self.semaphore.release()
+        self.global_semaphore.release()
+
+    @abc.abstractmethod
+    def play(
+        self,
+        game: MarkovGame,
+        agents: list[Agent],
+        agent_logger: AgentLogger,
+        game_logger: GameLogger,
+        progress_logger: ProgressLogger,
+        episode: int,
+        total_stages: int,
+    ) -> None:
+        """
+        Implements the logic for each episode.
+        This method should be overridden by subclasses.
+
+        It is discouraged to use instance variables in this method.
+        It is, however, allowed to use instance variables that are set in the
+        `__init__` method.
+
+        Args:
+            game (MarkovGame): The game to play.
+            agents (list[Agent]): The agents in the game.
+            agent_logger (AgentLogger): The agent logger.
+            game_logger (GameLogger): The game logger.
+            progress_logger (ProgressLogger): The progress logger.
+            episode (int): The episode number.
+            total_stages (int): The total number of stages.
+        """
+
+
+class DefaultEpisode(Episode):
+    """A single game between agents."""
+
+    def play(
+        self,
+        game: MarkovGame,
+        agents: list[Agent],
+        agent_logger: AgentLogger,
+        game_logger: GameLogger,
+        progress_logger: ProgressLogger,
+        episode: int,
+        total_stages: int,
+    ) -> None:
+        # Acquire the semaphore to limit the number of parallel episodes.
+        agent_logger.on_episode_begin(episode, agents)
+        game_logger.on_episode_begin(episode, game)
+        progress_logger.on_episode_begin(episode, agents)
 
         state = game.reset()
         for agent in self.agents:
             agent.reset()
 
-        for stage in range(1, 1 + self.total_stages):
+        for stage in range(1, 1 + total_stages):
             agent_logger.on_stage_begin(stage, agents)
             game_logger.on_stage_begin(stage, game)
-            progress_logger.on_stage_begin(stage, agents=agents, episode=self.episode)
+            progress_logger.on_stage_begin(stage, agents, episode)
 
-            actions = [agent.act(game.state) for agent in self.agents]
+            actions = [agent.act(game.state) for agent in agents]
             next_state, rewards = game.step(actions)
 
             for i, agent in enumerate(agents):
@@ -92,14 +135,10 @@ class DefaultEpisode(Episode):
 
             agent_logger.on_stage_end(stage, agents)
             game_logger.on_stage_end(stage, game, state, actions, rewards)
-            progress_logger.on_stage_end(stage, agents=agents, episode=self.episode)
+            progress_logger.on_stage_end(stage, agents=agents, episode=episode)
 
             state = next_state
 
-        agent_logger.on_episode_end(self.episode, agents)
-        game_logger.on_episode_end(self.episode, game)
-        progress_logger.on_episode_end(self.episode)
-
-        # Release the semaphore to allow another episode to run.
-        self.semaphore.release()
-        self.global_semaphore.release()
+        agent_logger.on_episode_end(episode, agents)
+        game_logger.on_episode_end(episode, game)
+        progress_logger.on_episode_end(episode)
