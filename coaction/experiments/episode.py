@@ -60,7 +60,6 @@ class Episode(abc.ABC, mp.Process):
             total_stages=self.total_stages,
         )
 
-        # Release the semaphore to allow another episode to run.
         self.semaphore.release()
         self.global_semaphore.release()
 
@@ -107,7 +106,6 @@ class DefaultEpisode(Episode):
         episode: int,
         total_stages: int,
     ) -> None:
-        # Acquire the semaphore to limit the number of parallel episodes.
         agent_logger.on_episode_begin(episode, agents)
         game_logger.on_episode_begin(episode, game)
         progress_logger.on_episode_begin(episode, agents)
