@@ -13,20 +13,19 @@ begins, or when a stage ends.
 import typing
 
 
+from coaction.utils.paths import ProjectPaths
+
+
 class Callback(typing.Protocol):
     """An abstract class representing a callback.
 
     The callbacks are called at different points in the experiment loop.
-    These points include when an experiment begins, when an episode begins,
-    when a stage begins, when an experiment ends, when an episode ends,
-    and when a stage ends.
+    These points include when an episode begins, when a stage begins,
+    when an episode ends, and when a stage ends.
     """
 
-    def on_experiment_begin(self, *args, **kwargs):
-        """Called when an experiment begins."""
-
-    def on_experiment_end(self, *args, **kwargs):
-        """Called when an experiment ends."""
+    def __init__(self, *args, **kwargs) -> None:
+        """Initialize the callback."""
 
     def on_episode_begin(self, *args, **kwargs):
         """Called when an episode begins."""

@@ -6,12 +6,12 @@ from typing import Final, Sequence
 import numpy as np
 import numpy.typing as npt
 
-from coaction.agents.agent import TwoPlayerAgent
+from coaction.agents.agent import Agent
 from coaction.agents.fictitious_play import utils as fp_utils
 from coaction.games.game import ActionType, RewardType, StateType
 
 
-class ModelFreeSmoothedFictitiousPlay(TwoPlayerAgent):
+class ModelFreeSmoothedFictitiousPlay(Agent):
     """Implementation of the Fictitious Play algorithm.
 
     Parameters
@@ -34,6 +34,7 @@ class ModelFreeSmoothedFictitiousPlay(TwoPlayerAgent):
         self,
         name: str,
         seed: int,
+        transition_matrix: npt.NDArray[np.float_],
         reward_matrix: npt.NDArray[RewardType],
         alpha: Callable[[int], float],
         beta: Callable[[int], float],
@@ -49,6 +50,7 @@ class ModelFreeSmoothedFictitiousPlay(TwoPlayerAgent):
         Args:
             name (str): The name of the agent.
             seed (int): The seed for the random number generator.
+            transition_matrix (npt.NDArray[np.float_]): The transition matrix.
             reward_matrix (npt.NDArray[RewardType]): The reward matrix.
             alpha (Callable[[int], float]): Step size for beliefs.
             beta (Callable[[int], float]): Step size for Q function.
@@ -58,7 +60,9 @@ class ModelFreeSmoothedFictitiousPlay(TwoPlayerAgent):
             initial_pi (None | int | float | np.ndarray): The initial pi matrix.
             logged_params (Collection[str]): The parameters to log.
         """
-        super().__init__(name, seed, logged_params, **kwargs)
+        super().__init__(
+            name, seed, transition_matrix, reward_matrix, logged_params, **kwargs
+        )
 
         self._alpha = alpha
         self._beta = beta
@@ -114,10 +118,11 @@ class ModelFreeSmoothedFictitiousPlay(TwoPlayerAgent):
         self,
         state: StateType,
         actions: Sequence[ActionType],
-        reward: RewardType,
+        rewards: Sequence[RewardType],
         next_state: StateType,
         **kwargs,
     ):
+        reward = rewards[0]
         self._pi[state] += fp_utils.belief_update(
             self._pi[state], self._alpha(self._counts[state].sum()), actions[1]  # type: ignore
         )

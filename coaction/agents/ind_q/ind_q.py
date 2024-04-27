@@ -6,13 +6,13 @@ from typing import Sequence
 import numpy as np
 import numpy.typing as npt
 
-from coaction.agents.agent import TwoPlayerAgent
+from coaction.agents.agent import Agent
 from coaction.agents.ind_q import utils as ind_q_utils
 from coaction.games.game import ActionType, RewardType, StateType
 from coaction.utils.math import softmax
 
 
-class IndividualQLearning(TwoPlayerAgent):
+class IndividualQLearning(Agent):
     """Implementation of individual Q-learning agent.
 
     Parameters
@@ -37,6 +37,7 @@ class IndividualQLearning(TwoPlayerAgent):
         self,
         name: str,
         seed: int,
+        transition_matrix: npt.NDArray[np.float_],
         reward_matrix: npt.NDArray[RewardType],
         alpha: Callable[[int], float],
         beta: Callable[[int], float],
@@ -44,6 +45,7 @@ class IndividualQLearning(TwoPlayerAgent):
         tau: float,
         max_step_size: float,
         initial_q: None | int | float | np.ndarray = None,
+        logged_params: Sequence[str] = None,
         **kwargs,
     ):
         """Initialize the agent.
@@ -51,6 +53,7 @@ class IndividualQLearning(TwoPlayerAgent):
         Args:
             name (str): The name of the agent.
             seed (int): The seed for the random number generator.
+            transition_matrix (npt.NDArray[np.float_]): The transition matrix.
             reward_matrix (npt.NDArray[RewardType]): The reward matrix.
             alpha (Callable[[int], float]): Step size for q update.
             beta (Callable[[int], float]): Step size for v update.
@@ -58,8 +61,11 @@ class IndividualQLearning(TwoPlayerAgent):
             tau (float): Temperature parameter
             max_step_size (float): Maximum step size for q update
             initial_q (None | int | float | np.ndarray): The initial Q matrix.
+            logged_params (Sequence[str]): The parameters to log.
         """
-        super().__init__(name, seed, **kwargs)
+        super().__init__(
+            name, seed, transition_matrix, reward_matrix, logged_params, **kwargs
+        )
         self._alpha = alpha
         self._beta = beta
         self._gamma = gamma
@@ -98,11 +104,11 @@ class IndividualQLearning(TwoPlayerAgent):
         self,
         state: StateType,
         actions: Sequence[ActionType],
-        reward: RewardType,
+        rewards: Sequence[RewardType],
         next_state: StateType,
         **kwargs,
     ):
-        action = actions[0]
+        action, reward = actions[0], rewards[0]
         self._q[state, action] += min(
             self._alpha(self._counts[state]) / self._mu[action], self._max_step_size
         ) * (reward + self._gamma * self.v[next_state] - self._q[state, action])

@@ -6,12 +6,12 @@ from typing import Final, Sequence
 import numpy as np
 import numpy.typing as npt
 
-from coaction.agents.agent import TwoPlayerAgent
+from coaction.agents.agent import Agent
 from coaction.agents.fictitious_play import utils as fp_utils
 from coaction.games.game import ActionType, RewardType, StateType
 
 
-class AsynchronousFictitiousPlay(TwoPlayerAgent):
+class AsynchronousFictitiousPlay(Agent):
     """Implementation of the Fictitious Play algorithm.
 
     Parameters
@@ -36,8 +36,8 @@ class AsynchronousFictitiousPlay(TwoPlayerAgent):
         self,
         name: str,
         seed: int,
-        reward_matrix: npt.NDArray[RewardType],
         transition_matrix: npt.NDArray[np.float_],
+        reward_matrix: npt.NDArray[RewardType],
         alpha: Callable[[int], float],
         beta: Callable[[int], float],
         gamma: float,
@@ -60,7 +60,9 @@ class AsynchronousFictitiousPlay(TwoPlayerAgent):
             initial_pi (None | int | float | np.ndarray): The initial pi matrix.
             logged_params (Collection[str]): The parameters to log.
         """
-        super().__init__(name, seed, logged_params, **kwargs)
+        super().__init__(
+            name, seed, transition_matrix, reward_matrix, logged_params, **kwargs
+        )
         self._R = reward_matrix  # pylint: disable=invalid-name
         self._T = transition_matrix  # pylint: disable=invalid-name
 
@@ -116,7 +118,7 @@ class AsynchronousFictitiousPlay(TwoPlayerAgent):
         self,
         state: StateType,
         actions: Sequence[ActionType],
-        reward: RewardType,
+        rewards: Sequence[RewardType],
         next_state: StateType,
         **kwargs,
     ):
@@ -125,13 +127,14 @@ class AsynchronousFictitiousPlay(TwoPlayerAgent):
             self._alpha(self._counts[state]),
             actions[1],  # type: ignore
         )
-        self._Q[state] += fp_utils.model_based_sync_q_update(
-            self._Q[state],
+        self._Q[state] += fp_utils.model_based_async_q_update(
+            self._Q,
             self.v,
             self._beta(self._counts[state]),
             self._gamma,
-            self._R[state],
-            self._T[state],
+            state,
+            self._R,
+            self._T,
         )
         self.v = self._utils.value_function(self._Q, self._pi)
         self._counts[state] += 1

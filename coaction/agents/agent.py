@@ -18,13 +18,21 @@ class Agent(ABC):
     """Base class for all agents."""
 
     def __init__(
-        self, name: str, seed: int, logged_params: Collection[str] = None, **kwargs
+        self,
+        name: str,
+        seed: int,
+        transition_matrix: np.ndarray = None,
+        reward_matrix: np.ndarray = None,
+        logged_params: Collection[str] = None,
+        **kwargs,
     ):
         """Initialize the agent.
 
         Args:
             name (str): The name of the agent.
             seed (int): The seed for the random number generator.
+            transition_matrix (np.ndarray): The transition matrix of the game.
+            reward_matrix (np.ndarray): The reward matrix of the game.
             logged_params (dict[str, Any]): The parameters to log. If None, default agent
                 configuration is used. If the agent does not override `loggable_params`,
                 this parameter is ignored and the default agent configuration is used.
@@ -38,6 +46,8 @@ class Agent(ABC):
         _ = kwargs  # ignore unused kwargs
         self._name: str = name
         self._seed: int = seed
+        self._transition_matrix: np.ndarray = transition_matrix
+        self._reward_matrix: np.ndarray = reward_matrix
         self._rng = None
         self._buffer = {}
         self._logged_params = {}
@@ -125,7 +135,7 @@ class Agent(ABC):
         self,
         state: StateType,
         actions: Sequence[ActionType],
-        reward: RewardType,
+        rewards: Sequence[RewardType],
         next_state: StateType,
         **kwargs,
     ):
@@ -194,19 +204,3 @@ class Agent(ABC):
         else:
             self._logged_params[name] = value
             super().__setattr__(name, value)
-
-
-class TwoPlayerAgent(Agent):
-    """Base class for agents in two-player games.
-
-    This class is a convenience class for agents in two-player games.
-    It does not add any functionality over the base `Agent` class.
-    """
-
-
-class MultiPlayerAgent(Agent):
-    """Base class for agents in multi-player games.
-
-    This class is a convenience class for agents in multi-player games.
-    It does not add any functionality over the base `Agent` class.
-    """

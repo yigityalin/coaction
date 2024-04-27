@@ -1,13 +1,51 @@
 """Configuration for experiments."""
 
 from pathlib import Path
-from typing import Any
+from typing import Any, NamedTuple
 import dataclasses
 import shutil
 
-from coaction.experiments.episode import Episode, DefaultEpisode
+from coaction.agents.agent import Agent
+from coaction.experiments.callbacks import Callback
+from coaction.games.game import Game
 from coaction.utils.modules import load_module
 from coaction.utils.paths import ProjectPaths
+
+
+class AgentConfig(NamedTuple):
+    """Configuration for an agent.
+
+    Attributes:
+        agent_type (type): The type of the agent.
+        agent_kwargs (dict[str, Any]): The keyword arguments for the agent.
+    """
+
+    agent_type: type[Agent]
+    agent_kwargs: dict[str, Any]
+
+
+class GameConfig(NamedTuple):
+    """Configuration for a game.
+
+    Attributes:
+        game_type (type): The type of the game.
+        game_kwargs (dict[str, Any]): The keyword arguments for the game.
+    """
+
+    game_type: type[Game]
+    game_kwargs: dict[str, Any]
+
+
+class CallbackConfig(NamedTuple):
+    """Configuration for a callback.
+
+    Attributes:
+        callback_type (type): The type of the callback.
+        callback_kwargs (dict[str, Any]): The keyword arguments for the callback.
+    """
+
+    callback_type: type[Callback]
+    callback_kwargs: dict[str, Any]
 
 
 @dataclasses.dataclass
@@ -18,33 +56,22 @@ class ExperimentConfig:
 
     Attributes:
         name (str): The name of the experiment.
-        agent_types (list[type]): The types of the agents.
-        game_type (type): The type of the game.
-        game_kwargs (dict[str, Any]): The keyword arguments for the game.
-        agent_kwargs (list[dict[str, Any]]): The keyword arguments for the agents.
-        agent_logger_kwargs (dict[str, Any]): The keyword arguments for the
-            agent loggers.
-        game_logger_kwargs (dict[str, Any]): The keyword arguments for the game
-            logger.
-        progress_logger_kwargs (dict[str, Any]): The keyword arguments for the
-            progress logger.
+        game_config (GameConfig): The configuration for the game.
+        agent_configs (list[AgentConfig]): The configurations for the agents.
+        callback_configs (list[CallbackConfig]): The configurations for the callbacks.
         total_episodes (int): The total number of episodes.
         total_stages (int): The total number of stages.
         num_parallel_episodes (int): The number of episodes to run in parallel.
     """
 
     name: str
-    agent_types: list[type]
-    game_type: type
-    game_kwargs: dict[str, Any]
-    agent_kwargs: list[dict[str, Any]]
-    agent_logger_kwargs: dict[str, Any]
-    game_logger_kwargs: dict[str, Any]
-    progress_logger_kwargs: dict[str, Any]
+    game_config: GameConfig
+    agent_configs: list[AgentConfig]
+    callback_configs: list[CallbackConfig]
     total_episodes: int
     total_stages: int
     num_parallel_episodes: int
-    episode_class: type[Episode]
+    episode_class: type
 
     @classmethod
     def from_py_file(cls, path: Path | str):
@@ -53,13 +80,20 @@ class ExperimentConfig:
         fields = [field for field in dataclasses.fields(cls) if field.name != "name"]
         kwargs = {field.name: getattr(module, field.name, None) for field in fields}
         kwargs["name"] = getattr(module, "name", module.__name__)
-        kwargs["episode_class"] = getattr(module, "episode_class", DefaultEpisode)
+        episode_class = getattr(module, "episode_class", None)
+        if episode_class is None:
+            # Avoid circular import
+            from coaction.experiments.episode import (  # pylint: disable=import-outside-toplevel
+                DefaultEpisode,
+            )
+
+            kwargs["episode_class"] = DefaultEpisode
         config = cls(**kwargs)  # type: ignore
         config._validate()
         return config
 
     def _validate(self):
-        agent_names = [kwargs["name"] for kwargs in self.agent_kwargs]  # type: ignore
+        agent_names = [kwargs["name"] for _, kwargs in self.agent_configs]  # type: ignore
         if len(agent_names) != len(set(agent_names)):
             raise ValueError("Agent names must be unique.")
 
@@ -73,8 +107,10 @@ class GlobalConfig:
     """Global configuration for a project.
 
     Attributes:
+        run_name (str): The name of the run.
         num_parallel_experiments (int): The number of experiments to run in
             parallel.
+        num_parallel_episodes (int): The number of episodes to run in parallel.
         order (list[str]): The order in which to run the experiments.
     """
 
@@ -119,6 +155,10 @@ class ProjectConfig:
         """Return a project config from a directory."""
         paths = ProjectPaths(path)
         project_dir = paths.get_project_dir()
+        for path_ in paths.get_project_config_dir().iterdir():
+            if path_.suffix == ".py" and path_.stem.startswith("_"):
+                load_module(path_, add_to_sys_modules=True)
+
         global_config = GlobalConfig.from_py_file(paths.get_project_config_path())
         paths.run_name = global_config.run_name
         if not project_dir.is_dir():

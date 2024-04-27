@@ -1,14 +1,20 @@
+# You can use the implementations in coaction.agents for reference.
 class {agent_name}(agents.Agent):
     """{agent_name} agent."""
 
-    # NOTE: if the agent requires the reward matrix or transition matrix, 
-    #       add them here with names `reward_matrix` and `transition_matrix`
-    def __init__(self, name: str, seed: int, **kwargs):  # TODO: add any additional parameters here
+    # NOTE: do not remove any arguments
+    def __init__(
+        self,
+        name: str,
+        seed: int,
+        **kwargs,
+    ):  # TODO: add any additional parameters here
         super().__init__(name, seed, **kwargs)
         # TODO: add any additional initialization here
     
     def reset(self):
         """Reset the agent's parameters."""
+        super().reset()
         # TODO: add any additional reset steps here
 
     def act(self, state: games.StateType) -> games.ActionType:
@@ -19,7 +25,7 @@ class {agent_name}(agents.Agent):
         self,
         state: games.StateType,
         actions: typing.Sequence[games.ActionType],
-        reward: games.RewardType,
+        rewards: games.RewardType,
         next_state: games.StateType,
         **kwargs,
     ):

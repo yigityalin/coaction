@@ -17,7 +17,7 @@ def _parse_args():
 
 
 def main(args: argparse.Namespace):
-    """Run the mal command line tool.
+    """Run the coaction command line tool.
 
     Args:
         args (argparse.Namespace): The command line arguments.

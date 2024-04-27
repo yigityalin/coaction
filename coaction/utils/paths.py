@@ -136,6 +136,14 @@ class ProjectPaths:
         return self.get_project_config_dir() / f"{self.project_name}.py"
 
     @final
+    def get_project_custom_agents_path(self) -> Path:
+        """Return the path to a project custom agents file.
+
+        The project custom agents file is the file that contains the custom agents for a project.
+        """
+        return self.get_project_config_dir() / "_agents.py"
+
+    @final
     def get_experiment_config_path(self) -> Path:
         """Return the path to an experiment config file.
 

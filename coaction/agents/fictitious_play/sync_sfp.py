@@ -6,12 +6,12 @@ from typing import Final, Sequence
 import numpy as np
 import numpy.typing as npt
 
-from coaction.agents.agent import TwoPlayerAgent
+from coaction.agents.agent import Agent
 from coaction.agents.fictitious_play import utils as fp_utils
 from coaction.games.game import ActionType, RewardType, StateType
 
 
-class SynchronousSmoothedFictitiousPlay(TwoPlayerAgent):
+class SynchronousSmoothedFictitiousPlay(Agent):
     """Implementation of the Fictitious Play algorithm.
 
     Parameters
@@ -38,8 +38,8 @@ class SynchronousSmoothedFictitiousPlay(TwoPlayerAgent):
         self,
         name: str,
         seed: int,
-        reward_matrix: npt.NDArray[RewardType],
         transition_matrix: npt.NDArray[np.float_],
+        reward_matrix: npt.NDArray[RewardType],
         alpha: Callable[[int], float],
         beta: Callable[[int], float],
         gamma: float,
@@ -54,8 +54,8 @@ class SynchronousSmoothedFictitiousPlay(TwoPlayerAgent):
         Args:
             name (str): The name of the agent.
             seed (int): The seed for the random number generator.
-            reward_matrix (npt.NDArray[RewardType]): The reward matrix.
             transition_matrix (npt.NDArray[np.float_]): The transition matrix.
+            reward_matrix (npt.NDArray[RewardType]): The reward matrix.
             alpha (Callable[[int], float]): Step size for beliefs.
             beta (Callable[[int], float]): Step size for Q function.
             gamma (float): Discount factor
@@ -64,7 +64,9 @@ class SynchronousSmoothedFictitiousPlay(TwoPlayerAgent):
             initial_pi (None | int | float | np.ndarray): The initial pi matrix.
             logged_params (bool): Whether to log the parameters.
         """
-        super().__init__(name, seed, logged_params, **kwargs)
+        super().__init__(
+            name, seed, transition_matrix, reward_matrix, logged_params, **kwargs
+        )
         self._R = reward_matrix  # pylint: disable=invalid-name
         self._T = transition_matrix  # pylint: disable=invalid-name
 
@@ -125,7 +127,7 @@ class SynchronousSmoothedFictitiousPlay(TwoPlayerAgent):
         self,
         state: StateType,
         actions: Sequence[ActionType],
-        reward: RewardType,
+        rewards: Sequence[RewardType],
         next_state: StateType,
         **kwargs,
     ):
