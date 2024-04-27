@@ -13,9 +13,6 @@ begins, or when a stage ends.
 import typing
 
 
-from coaction.utils.paths import ProjectPaths
-
-
 class Callback(typing.Protocol):
     """An abstract class representing a callback.
 
